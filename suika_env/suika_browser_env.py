@@ -10,7 +10,7 @@ import imageio
 
 DEFAULT_URL = 'http://localhost:8001/'
 class SuikaBrowserEnv(gymnasium.Env):
-    def __init__(self, headless=True, delay_before_img_capture=1.0) -> None:
+    def __init__(self, headless=True, delay_before_img_capture=0.5) -> None:
         opts = webdriver.ChromeOptions()
         opts.add_argument("--width=1024")
         opts.add_argument("--height=768")
@@ -18,8 +18,8 @@ class SuikaBrowserEnv(gymnasium.Env):
         if headless:
             opts.add_argument("--headless=new")
         self.delay_before_img_capture = delay_before_img_capture
-        self.img_width = 320
-        self.img_height = 240
+        self.img_width = 128
+        self.img_height = 128
         self.driver = webdriver.Chrome(options=opts)
         _obs_dict = {
             'image': gymnasium.spaces.Box(low=0, high=255, shape=(self.img_height, self.img_width, 4),  dtype="uint8"),
@@ -31,7 +31,7 @@ class SuikaBrowserEnv(gymnasium.Env):
     def reset(self,seed=None, options=None):
         self._reload()
         info = {}
-        obs = self._get_obs()
+        obs, status = self._get_obs_and_status()
         return obs, info
 
     def _reload(self):
@@ -41,10 +41,11 @@ class SuikaBrowserEnv(gymnasium.Env):
         self.driver.find_element(By.ID, 'start-game-button').click()
         time.sleep(1)
     
-    def _get_obs(self):
+    def _get_obs_and_status(self):
         img = self._capture_canvas()
-        score = np.array([self.driver.execute_script('return window.Game.score;')], dtype=np.float32)
-        return dict(image=img, score=score)
+        status, score = self.driver.execute_script('return [window.Game.stateIndex, window.Game.score];')
+        score = np.array([score], dtype=np.float32)
+        return dict(image=img, score=score), status
     
     def _capture_canvas(self):
         # screenshots the game canvas with id "game-canvas" and stores it in a numpy array
@@ -52,9 +53,9 @@ class SuikaBrowserEnv(gymnasium.Env):
         image_string = canvas.screenshot_as_png
         img = Image.open(io.BytesIO(image_string))
         # first crop out right hand side and lower bar.
-        # img = img.crop((0,0,960,1360))
-        # arr = np.asarray(img)
-        # imageio.imwrite('foo.png', arr)
+        img = img.crop((0,0,520,img.height))
+        arr = np.asarray(img)
+        # imageio.imwrite('cropped.png', arr)
         # import ipdb; ipdb.set_trace()
         imgResized = img.resize((self.img_width,self.img_height), Image.ANTIALIAS) 
         arr = np.asarray(imgResized)
@@ -75,9 +76,10 @@ class SuikaBrowserEnv(gymnasium.Env):
         driver.find_element(By.ID, 'drop-fruit-button').click()
         time.sleep(self.delay_before_img_capture)
 
-        obs = self._get_obs()
+        obs, status = self._get_obs_and_status()
         reward = 0
-        terminal = False
+        # check if game is over.
+        terminal = status == 3
         truncated = False 
         info['score'] = obs['score'].item()
         reward += obs['score'].item()
@@ -90,15 +92,18 @@ class SuikaBrowserEnv(gymnasium.Env):
             self.driver.quit()
 
 if __name__ == "__main__":
-    # env = SuikaBrowserEnv(headless=True, delay_before_img_capture=1.0)
-    # video = []
-    # obs, info = env.reset()
-    # video.append(obs['image'])
-    # # import imageio
-    # for i in range(11):
-    #     action = i * 0.1
-    #     obs, rew, terminated, truncated, info = env.step(action)
-    #     video.append(obs['image'])
-    # imageio.mimwrite('foo.gif', video)
-    # try running 4 envs in parallel using Gymnasium async vector env.
-    pass
+    try:
+        env = SuikaBrowserEnv(headless=False, delay_before_img_capture=0.5)
+        video = []
+        obs, info = env.reset()
+        # video.append(obs['image'])
+        # import imageio
+        terminated = False
+        while not terminated:
+            action = [0]
+            obs, rew, terminated, truncated, info = env.step(action)
+            # video.append(obs['image'])
+            if terminated:
+                break
+    finally:
+        env.close()
