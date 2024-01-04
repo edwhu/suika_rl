@@ -1,3 +1,5 @@
+# This demo shows how to run multiple parallel instances of SuikaBrowserEnv with gymnasium's AsyncVectorEnv.
+
 import gymnasium
 import suika_env
 import numpy as np

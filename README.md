@@ -23,22 +23,9 @@ To install the Suika Gymnasium Environment, follow these steps:
 1. Clone the repository: `git clone https://github.com/your-repo/suika-gymnasium-env.git`
 2. Navigate to the project directory: `cd suika-gymnasium-env`
 4. Install the package: `pip install -e .`
+5. Expose the package for python import. `export PYTHONPATH=/home/edward/projects/suika_rl`
+6. To see how to use the env, run `python demo_async_vec_env.py`.
 
-Now, we can import the environment in our python file. To do so, we first expose the package folder to python so we can import it.
-```sh
-export PYTHONPATH=/home/edward/projects/suika_rl
-```
-
-Next, we import it, and construct the environnment. At this point, use your favorite RL algorithm to maximize rewards.
-```python
-import suika_env # Registers Suika into gymnasium.
-import gymnasium 
-
-env = gymnasium.make("SuikaEnv-v0")
-env.reset()
-for i in range(10):
-    env.step(env.action_space.sample())
-```
 
 ## Acknowledgements
 
