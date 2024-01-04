@@ -7,10 +7,22 @@ import io
 import numpy as np    
 from PIL import Image
 import imageio
+import subprocess
+import socket
+import os
 
-DEFAULT_URL = 'http://localhost:8001/'
 class SuikaBrowserEnv(gymnasium.Env):
-    def __init__(self, headless=True, delay_before_img_capture=0.5) -> None:
+    def __init__(self, headless=True, port=8923, delay_before_img_capture=0.5) -> None:
+        self.game_url = f"http://localhost:{port}/"
+        # Check if port is already in use
+        self.server = None
+        if not self.is_port_in_use(port):
+            # Get the absolute path of the current script
+            script_dir = os.path.dirname(os.path.realpath(__file__))
+            # Construct the absolute path of the suika-game directory
+            suika_game_dir = os.path.join(script_dir, 'suika-game')
+            self.server = subprocess.Popen(["python", "-m", "http.server", str(port)], cwd=suika_game_dir, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
         opts = webdriver.ChromeOptions()
         opts.add_argument("--width=1024")
         opts.add_argument("--height=768")
@@ -31,12 +43,13 @@ class SuikaBrowserEnv(gymnasium.Env):
     def reset(self,seed=None, options=None):
         self._reload()
         info = {}
+        self.score = 0
         obs, status = self._get_obs_and_status()
         return obs, info
 
     def _reload(self):
         # open the game.
-        self.driver.get(DEFAULT_URL)
+        self.driver.get(self.game_url)
         # click start game button with id "start-game-button"
         self.driver.find_element(By.ID, 'start-game-button').click()
         time.sleep(1)
@@ -81,19 +94,30 @@ class SuikaBrowserEnv(gymnasium.Env):
         # check if game is over.
         terminal = status == 3
         truncated = False 
-        info['score'] = obs['score'].item()
-        reward += obs['score'].item()
+        score = obs['score'].item()
+        info['score'] = score
+        reward += score - self.score
+        self.score = score
 
         return obs, reward, terminal, truncated, info
+
+
+    def is_port_in_use(self, port):
+        """Check if a given port is already in use"""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
 
     def close(self):
         super().close()
         if self.driver is not None:
             self.driver.quit()
+        # Stop the server
+        if self.server is not None:
+            self.server.terminate()
 
 if __name__ == "__main__":
+    env = SuikaBrowserEnv(headless=False, delay_before_img_capture=0.5)
     try:
-        env = SuikaBrowserEnv(headless=False, delay_before_img_capture=0.5)
         video = []
         obs, info = env.reset()
         # video.append(obs['image'])

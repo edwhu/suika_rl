@@ -8,5 +8,7 @@ setup(
     install_requires=[
         'gymnasium',  # and other necessary packages
         'selenium',
+        'ipdb',
+        'imageio',
     ],
 )
