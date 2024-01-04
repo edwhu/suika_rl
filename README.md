@@ -23,6 +23,10 @@ To install the Suika Gymnasium Environment, follow these steps:
 5. Expose the package for python import. `export PYTHONPATH=/home/edward/projects/suika_rl`
 6. To see how to use the env, run `python demo_async_vec_env.py`.
 
+The demo script should render this GIF.
+
+![Random Policy GIF](grid_images.gif)
+
 ## Desired Improvements
 - The environment transition takes about 0.5 seconds to complete. This makes data collection slow. To fix, we should speed up the animations and physics. 
 
