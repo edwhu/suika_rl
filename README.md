@@ -42,9 +42,9 @@ for i in range(10):
 
 ## Acknowledgements
 
-- [Original Suika Game](https://link-to-original-suika)
-- [Open Source Suika Version](https://link-to-open-source-suika)
-- [CodeBullet's Suika Video](https://link-to-codebullet-video)
+- [Original Suika Game](https://suikagame.com/)
+- [Open Source Suika Version](https://github.com/TomboFry/suika-game)
+- [CodeBullet's Suika Video](https://www.youtube.com/watch?v=QbwgQSwMSGM)
 - GPT4 was used to accelerate development and documentation.
 
 This project is inspired by the original Suika game and the open-source version. Special thanks to CodeBullet for the informative and entertaining video on Suika.
