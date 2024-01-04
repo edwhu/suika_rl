@@ -1,4 +1,4 @@
-# Suika Gymnasium Environment
+# Suika Reinforcement Learning Environment
 
 Suika is a popular Japanese puzzle game that combines the elements of Tetris and 2048. The game has gained significant popularity due to its unique and challenging gameplay mechanics.
 
